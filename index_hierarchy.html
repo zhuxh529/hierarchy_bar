@@ -25,9 +25,13 @@ rect.background {
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
 var edge=[0];
+var bars=[];
+var x1=5; 
 var margin = {top: 30, right: 120, bottom: 0, left: 120},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
+
+
 
 var x = d3.scale.linear()
     .range([0, width]);
@@ -72,7 +76,6 @@ svg.append("g")
 d3.json("data.json", function(error, root) {
   partition.sort(null).nodes(root);
   x.domain([0, root.value]).nice();
-  width_scale=width/root.value;
   down(root, 0);
 });
 
@@ -119,7 +122,9 @@ function down(d, i) {
 
   // Transition entering rects to the new x-scale.
   enterTransition.select("rect")
-      .attr("width", function(d) { return x(d.value)<0?-x(d.value):x(d.value); })
+      .attr("width", function(d) { return x(d.value)<0?-x(d.value):x(d.value)
+        ;
+          })
       .style("fill", function(d) { return color(!!d.children); });
 
   // Transition exiting bars to fade out.
@@ -130,7 +135,9 @@ function down(d, i) {
 
   // Transition exiting bars to the new x-scale.
   exitTransition.selectAll("rect")
-      .attr("width", function(d) {return x(d.value)<0?-x(d.value):x(d.value); });
+      .attr("width", function(d) {return x(d.value)<0?-x(d.value):x(d.value)
+        ;
+         return x(x1); });
 
   // Rebind the current node to the background.
   svg.select(".background")
@@ -177,7 +184,10 @@ function up(d) {
   // Transition entering rects to the new x-scale.
   // When the entering parent rect is done, make it visible!
   enterTransition.select("rect")
-      .attr("width", function(d) {return x(d.value)<0?-x(d.value):x(d.value);})
+      .attr("width", function(d) {return x(d.value)<0?-x(d.value):x(d.value);
+      
+      }
+      )
       .each("end", function(p) { if (p === d) d3.select(this).style("fill-opacity", null); });
 
   // Transition exiting bars to the parent's position.
@@ -192,7 +202,8 @@ function up(d) {
 
   // Transition exiting rects to the new scale and fade to parent color.
   exitTransition.select("rect")
-      .attr("width", function(d) { return x(d.value)<0?-x(d.value):x(d.value); })
+      .attr("width", function(d) { return x(d.value)<0?-x(d.value):x(d.value) ;
+         })
       .style("fill", color(true));
 
   // Remove exiting nodes when the last child has finished transitioning.
@@ -209,7 +220,7 @@ function up(d) {
 
 // Creates a set of bars for the given data node, at the specified index.
 function bar(d) {
-
+ 
   var bar = svg.insert("g", ".y.axis")
       .attr("class", "enter")
       .attr("transform", "translate(0,5)")
@@ -227,9 +238,23 @@ function bar(d) {
       .text(function(d) { return d.name; });
 
   bar.append("rect")
-      .attr("width", function(d,i) { return x(d.value)<0?-x(d.value):x(d.value);})
+      .attr("width", function(d,i) { 
+        // return x(d.value)<0?-x(d.value):x(d.value);
+        if(d.depth==1){ d.value<0||i==1?edge.push(edge[i]+d.value): edge.push(d.value); bars.push(d.value);}
+        return x(d.value)<0?-x(d.value):x(d.value);
+      })
       .attr("height", barHeight)
-      .attr("x", function(d,i){  return d.value<0?x(7.6):0;} );
+      .attr("x", function(d,i){ 
+        if(d.depth==1){
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        return d.value<0?(x(11)):0;}
+        else{
+          return 0;
+        }
+        // return d.value<0?(-x(d.value)+margin.left+margin.top):0;
+         //return -x(5.3)+margin.left+margin.top;
+      } );
+
 
 
 
