@@ -38,8 +38,8 @@
       {"name": "RectangleInterpolator", "size": -0.2}
      ]
     },
-    {"name": "ISchedulable", "size": -0.3},
-    {"name": "Tween", "size": -0.1}
+    {"name": "ISchedulable", "size": -0.65},
+    {"name": "Tween", "size": -0.7}
    ]
   },
   {
@@ -72,7 +72,7 @@
   {
    "name": "Producion Cost",
    "children": [
-    {"name": "DragForce", "size": -1.2},
+    {"name": "DragForce", "size": -1.34},
     {"name": "SpringForce", "size": -2.3}
    ]
   },

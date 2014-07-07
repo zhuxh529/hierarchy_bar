@@ -36,10 +36,13 @@ var margin = {top: 30, right: 120, bottom: 0, left: 120},
 var x = d3.scale.linear()
     .range([0, width]);
 
-var barHeight = 20;
+var barHeight = 30;
 
 var color = d3.scale.ordinal()
     .range(["steelblue", "#ccc"]);
+
+var cost_color=d3.scale.ordinal()
+    .range(["orange", "#ccc"]);
 
 var duration = 750,
     delay = 25;
@@ -100,7 +103,7 @@ function down(d, i) {
   // Have the text fade-in, even though the bars are visible.
   // Color the bars as parents; they will fade to children if appropriate.
   enter.select("text").style("fill-opacity", 1e-6);
-  enter.select("rect").style("fill", color(true));
+  enter.select("rect").style("fill",  function(d){ return (d.depth==1 && d.value<0)?cost_color(true):color(true); });
 
   // Update the x-scale domain.
   x.domain([0, d3.max(d.children, function(d) { return d.value; })]).nice();
@@ -125,7 +128,17 @@ function down(d, i) {
       .attr("width", function(d) { return x(d.value)<0?-x(d.value):x(d.value)
         ;
           })
-      .style("fill", function(d) { return color(!!d.children); });
+      .attr("x", function(d,i){ 
+        if(d.depth==1){
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        return d.value<0?(x(edge[i+1])):0;}
+        else{
+          return 0;
+        }
+        // return d.value<0?(-x(d.value)+margin.left+margin.top):0;
+         //return -x(5.3)+margin.left+margin.top;
+      } )
+      .style("fill",  function(d) { return (d.depth==1 && d.value<0)?cost_color(true):color(!!d.children); });
 
   // Transition exiting bars to fade out.
   var exitTransition = exit.transition()
@@ -136,8 +149,17 @@ function down(d, i) {
   // Transition exiting bars to the new x-scale.
   exitTransition.selectAll("rect")
       .attr("width", function(d) {return x(d.value)<0?-x(d.value):x(d.value)
-        ;
-         return x(x1); });
+        ; })
+      .attr("x", function(d,i){ 
+        if(d.depth==1){
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        return d.value<0?(x(edge[i+1])):0;}
+        else{
+          return 0;
+        }
+        // return d.value<0?(-x(d.value)+margin.left+margin.top):0;
+         //return -x(5.3)+margin.left+margin.top;
+      } );
 
   // Rebind the current node to the background.
   svg.select(".background")
@@ -164,7 +186,7 @@ function up(d) {
   // Color the bars as appropriate.
   // Exiting nodes will obscure the parent bar, so hide it.
   enter.select("rect")
-      .style("fill", function(d) { return color(!!d.children); })
+      .style("fill", function(d) { return (d.depth==1 && d.value<0)?cost_color(true):color(!!d.children); })
     .filter(function(p) { return p === d; })
       .style("fill-opacity", 1e-6);
 
@@ -188,6 +210,16 @@ function up(d) {
       
       }
       )
+      .attr("x", function(d,i){ 
+        if(d.depth==1){
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        return d.value<0?(x(edge[i+1])):0;}
+        else{
+          return 0;
+        }
+        // return d.value<0?(-x(d.value)+margin.left+margin.top):0;
+         //return -x(5.3)+margin.left+margin.top;
+      } )
       .each("end", function(p) { if (p === d) d3.select(this).style("fill-opacity", null); });
 
   // Transition exiting bars to the parent's position.
@@ -204,7 +236,17 @@ function up(d) {
   exitTransition.select("rect")
       .attr("width", function(d) { return x(d.value)<0?-x(d.value):x(d.value) ;
          })
-      .style("fill", color(true));
+      .attr("x", function(d,i){ 
+        if(d.depth==1){
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        return d.value<0?(x(edge[i+1])):0;}
+        else{
+          return 0;
+        }
+        // return d.value<0?(-x(d.value)+margin.left+margin.top):0;
+         //return -x(5.3)+margin.left+margin.top;
+      } )
+      .style("fill", function(d){return (d.depth==1 && d.value<0)?cost_color(true):color(true);});
 
   // Remove exiting nodes when the last child has finished transitioning.
   exit.transition()
@@ -240,14 +282,14 @@ function bar(d) {
   bar.append("rect")
       .attr("width", function(d,i) { 
         // return x(d.value)<0?-x(d.value):x(d.value);
-        if(d.depth==1){ d.value<0||i==1?edge.push(edge[i]+d.value): edge.push(d.value); bars.push(d.value);}
+        if(d.depth==1){ d.value<0||i==1?edge.push(edge[i]+d.value): edge.push(d.value); bars.push(d.value);} 
         return x(d.value)<0?-x(d.value):x(d.value);
       })
       .attr("height", barHeight)
       .attr("x", function(d,i){ 
         if(d.depth==1){
         //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
-        return d.value<0?(x(11)):0;}
+        return d.value<0?(x(edge[i+1])):0;}
         else{
           return 0;
         }
@@ -270,9 +312,12 @@ function bar(d) {
 // A stateful closure for stacking bars horizontally.
 function stack(i) {
   var x0 = 0;
+  var depth=1;
   return function(d) {
-    var tx = "translate(" + x0 + "," + barHeight * i * 1.2 + ")";
+    //x0=(d.depth==depth?x0;0);
+    var tx = "translate(" +0 + "," + barHeight * i * 1.2 + ")";
     x0 += x(d.value);
+    // alert(x0);
     return tx;
   };
 }
