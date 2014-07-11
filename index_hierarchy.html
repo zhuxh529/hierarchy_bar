@@ -107,7 +107,7 @@ svg.append("g")
   
 
 
-d3.json("readme.json", function(error, root) {
+d3.json("data.json", function(error, root) {
   partition.sort(null).nodes(root);
 
  x_low=0;
@@ -179,12 +179,13 @@ function down(d, i) {
 
   // Transition entering rects to the new x-scale.
   enterTransition.select("rect")
-      .attr("width", function(d) { return x(d.value)<0?-x(d.value)+x(0):x(d.value)-x(0)
+      .attr("width", function(d) { return Math.abs(x(d.value)-x(0))
         ;
           })
       .attr("x", function(d,i){ 
         if(d.depth==1){
         //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){return d.value<0?(x(edge[i+1]-d.value)):x(0); }
         return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
@@ -202,11 +203,12 @@ function down(d, i) {
 
   // Transition exiting bars to the new x-scale.
   exitTransition.selectAll("rect")
-      .attr("width", function(d) {return x(d.value)<0?-x(d.value)+x(0):x(d.value)-x(0)
+      .attr("width", function(d) {return Math.abs(x(d.value)-x(0))
         ; })
       .attr("x", function(d,i){ 
         if(d.depth==1){
         //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
         return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
@@ -245,10 +247,15 @@ function up(d) {
       .style("fill-opacity", 1e-6);
 
   // Update the x-scale domain.
-  var x_low=0;
+  x_low=0;
+  if(d.depth==1){
+    x_low=d.parent.children[d.parent.children.length-1].value;
+    x_low=x_low<0?x_low:0;
+    
+  }
   //if(d.)
 
-  x.domain([0, d3.max(d.parent.children, function(d) { return d.value<0?-d.value:d.value;})]).nice();
+  x.domain([x_low, d3.max(d.parent.children, function(d) { return d.value<0?-d.value:d.value;})]).nice();
 
   // Update the x-axis.
   svg.selectAll(".x.axis").transition()
@@ -266,12 +273,14 @@ function up(d) {
         .attr("x", function(d,i){ 
         if(d.depth==1){
         //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
+
         return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
         }
       })
-      .attr("width", function(d) {return x(d.value)<0?-x(d.value)+x(0):x(d.value)-x(0);})
+      .attr("width", function(d) {return Math.abs(x(d.value)-x(0));})
       .each("end", function(p) { if (p === d) d3.select(this).style("fill-opacity", null); });
 
   // Transition exiting bars to the parent's position.
@@ -286,11 +295,13 @@ function up(d) {
 
   // Transition exiting rects to the new scale and fade to parent color.
   exitTransition.select("rect")
-      .attr("width", function(d) { return x(d.value)<0?-x(d.value)+x(0):x(d.value)-x(0) ;
+      .attr("width", function(d) { return Math.abs(x(d.value)-x(0)) ;
          })
       .attr("x", function(d,i){ 
         if(d.depth==1){
         //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
+
         return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
@@ -329,7 +340,7 @@ function bar(d) {
       .attr("y", barHeight / 2)
       .attr("dy", ".35em")
       .style("text-anchor", "end")
-      .text(function(d) { return d.name; });
+      .text(function(d) { return d.name.split(":")[0]; });
 
   bar.append("rect")
        .on("mouseover", function(d) { d3.select(this).style("fill","orangered"); tip.show(d) ;})
@@ -337,14 +348,17 @@ function bar(d) {
       .attr("width", function(d,i) { 
         // return x(d.value)<0?-x(d.value):x(d.value);
         if(d.depth==1){ d.value<0||i==1?edge.push(edge[i]+d.value): edge.push(d.value); bars.push(d.value);} 
-        alert(-x(d.value)+x(0));
-        return x(d.value)<0?-x(d.value)+x(0):x(d.value)-x(0);
+         //alert(d.value);
+        return Math.abs(x(d.value)-x(0));
       })
       .attr("height", barHeight)
       .attr("x", function(d,i){ 
         if(d.depth==1){
         //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
-        return d.value<0?(x(edge[i+1])):x(0);}
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
+        return d.value<0?(x(edge[i+1])):x(0);
+        }
+
         else{
           return 0;
         }
@@ -366,7 +380,12 @@ function bar(d) {
 
 // A stateful closure for stacking bars horizontally.
 function stack(d,i) {
-  var x0 =x(d.parent&&d.value<0?d.parent.children[i+1].value:0);
+  //var index=i<d.parent.children.length?i+1:d.parent.children-1;
+  var x0;
+  if(d.name.indexOf(":last")>0 && d.value<0){ x0 =x(d.parent.children[i-1].value);}
+  else{
+  x0 =x(d.parent&&d.value<0?d.parent.children[i+1].value:0);
+  }
   var depth=1;
   return function(d) {
     //x0=(d.depth==depth?x0;0);
