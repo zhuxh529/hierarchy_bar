@@ -49,12 +49,12 @@ var bars=[];
 var x1=5; 
 var margin = {top: 30, right: 120, bottom: 0, left: 120},
     width = 960 - margin.left - margin.right,
-    height = 800 - margin.top - margin.bottom;
+    height = 500 - margin.top - margin.bottom;
 
 
 
 
-var y = d3.scale.linear()
+var x = d3.scale.linear()
     .range([0, width]);
 
 var barHeight = 40;
@@ -71,9 +71,9 @@ var duration = 750,
 var partition = d3.layout.partition()
     .value(function(d) { return d.size; });
 
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("bottom");
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("top");
 
 var width_scale;
 
@@ -122,7 +122,7 @@ d3.json("data.json", function(error, root) {
     x_low=x_low<0?x_low:0;
 
   
-  y.domain([x_low, root.value]).nice();
+  x.domain([x_low, root.value]).nice();
 
   down(root, 0);
   svg.call(tip);
@@ -166,19 +166,18 @@ function down(d, i) {
     
   }
 
-  y.domain([x_low, d3.max(d.children, function(d) { return d.value<0?-d.value:d.value; })]).nice();
+  x.domain([x_low, d3.max(d.children, function(d) { return d.value<0?-d.value:d.value; })]).nice();
 
   // Update the x-axis.
-  svg.selectAll(".y.axis").transition()
+  svg.selectAll(".x.axis").transition()
       .duration(duration)
-      .attr("transform", "translate(0," + (height- 15) + ")")
-      .call(yAxis);
+      .call(xAxis);
 
   // Transition entering bars to their new position.
   var enterTransition = enter.transition()
       .duration(duration)
       .delay(function(d, i) { return i * delay; })
-      .attr("transform", function(d, i) { return "translate(" + barHeight * i * 1.2 + ",0)"; });
+      .attr("transform", function(d, i) { return "translate(0," + barHeight * i * 1.2 + ")"; });
 
   // Transition entering text.
   enterTransition.select("text")
@@ -186,14 +185,14 @@ function down(d, i) {
 
   // Transition entering rects to the new x-scale.
   enterTransition.select("rect")
-      .attr("height", function(d) { return Math.abs(y(d.value)-y(0))
+      .attr("width", function(d) { return Math.abs(x(d.value)-x(0))
         ;
           })
-      .attr("y", function(d,i){ 
+      .attr("x", function(d,i){ 
         if(d.depth==1){
-        //return d.value<0?(y(edge[i+1])+margin.left+margin.top):0;}
-        if(d.name.indexOf(":last")>0){return d.value<0?(height-y(edge[i+1]-d.value)):height-y(0); }
-        return d.value<0?(height-y(edge[i+1])):height-y(0);}
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){return d.value<0?(x(edge[i+1]-d.value)):x(0); }
+        return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
         }
@@ -210,13 +209,13 @@ function down(d, i) {
 
   // Transition exiting bars to the new x-scale.
   exitTransition.selectAll("rect")
-      .attr("height", function(d) {return Math.abs(y(d.value)-y(0))
+      .attr("width", function(d) {return Math.abs(x(d.value)-x(0))
         ; })
-      .attr("y", function(d,i){ 
+      .attr("x", function(d,i){ 
         if(d.depth==1){
-        //return d.value<0?(y(edge[i+1])+margin.left+margin.top):0;}
-        if(d.name.indexOf(":last")>0){ return d.value<0?(y(edge[i+1]-d.value)):y(0); }
-        return d.value<0?(height-y(edge[i+1])):height-y(0);}
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
+        return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
         }
@@ -243,7 +242,7 @@ function up(d) {
 
   // Enter the new bars for the clicked-on data's parent.
   var enter = bar(d.parent)
-      .attr("transform", function(d, i) { return "translate(" + barHeight * i * 1.2 + ",0)"; })
+      .attr("transform", function(d, i) { return "translate(0," + barHeight * i * 1.2 + ")"; })
       .style("opacity", 1e-6);
 
   // Color the bars as appropriate.
@@ -262,13 +261,12 @@ function up(d) {
   }
   //if(d.)
 
-  y.domain([x_low, d3.max(d.parent.children, function(d) { return d.value<0?-d.value:d.value;})]).nice();
+  x.domain([x_low, d3.max(d.parent.children, function(d) { return d.value<0?-d.value:d.value;})]).nice();
 
   // Update the x-axis.
-  svg.selectAll(".y.axis").transition()
+  svg.selectAll(".x.axis").transition()
       .duration(duration)
-      .attr("transform", "translate(" + (height- 15)+ ",0)")
-      .call(yAxis);
+      .call(xAxis);
 
   // Transition entering bars to fade in over the full duration.
   var enterTransition = enter.transition()
@@ -278,17 +276,17 @@ function up(d) {
   // Transition entering rects to the new x-scale.
   // When the entering parent rect is done, make it visible!
   enterTransition.select("rect")
-        .attr("y", function(d,i){ 
+        .attr("x", function(d,i){ 
         if(d.depth==1){
         //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
-        if(d.name.indexOf(":last")>0){ return d.value<0?(height-y(edge[i+1]-d.value)):height-y(0); }
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
 
-        return d.value<0?(height-y(edge[i+1])):height-y(0);}
+        return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
         }
       })
-      .attr("height", function(d) {return Math.abs(y(d.value)-y(0));})
+      .attr("width", function(d) {return Math.abs(x(d.value)-x(0));})
       .each("end", function(p) { if (p === d) d3.select(this).style("fill-opacity", null); });
 
   // Transition exiting bars to the parent's position.
@@ -303,14 +301,14 @@ function up(d) {
 
   // Transition exiting rects to the new scale and fade to parent color.
   exitTransition.select("rect")
-      .attr("height", function(d) { return Math.abs(y(d.value)-y(0)) ;
+      .attr("width", function(d) { return Math.abs(x(d.value)-x(0)) ;
          })
-      .attr("y", function(d,i){ 
+      .attr("x", function(d,i){ 
         if(d.depth==1){
-        //return d.value<0?(y(edge[i+1])+margin.left+margin.top):0;}
-        if(d.name.indexOf(":last")>0){ return d.value<0?(height-y(edge[i+1]-d.value)):height-y(0); }
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
 
-        return d.value<0?(height-y(edge[i+1])):height-y(0);}
+        return d.value<0?(x(edge[i+1])):x(0);}
         else{
           return 0;
         }
@@ -331,12 +329,12 @@ function up(d) {
       .duration(end);
 }
 
-// Creates a set of bars for the given data node, at the specified indey.
+// Creates a set of bars for the given data node, at the specified index.
 function bar(d) {
  
-  var bar = svg.insert("g", ".x.axis")
+  var bar = svg.insert("g", ".y.axis")
       .attr("class", "enter")
-      .attr("transform", "translate(5,0)")
+      .attr("transform", "translate(0,5)")
     .selectAll("g")
       .data(d.children)
     .enter().append("g")
@@ -344,8 +342,8 @@ function bar(d) {
       .on("click", down);
 
   bar.append("text")
-      .attr("y", -6)
-      .attr("x", barHeight / 2)
+      .attr("x", -6)
+      .attr("y", barHeight / 2)
       .attr("dy", ".35em")
       .style("text-anchor", "end")
       .text(function(d) { return d.name.split(":")[0]; });
@@ -353,17 +351,18 @@ function bar(d) {
   bar.append("rect")
        .on("mouseover", function(d) { d3.select(this).style("fill","orangered"); tip.show(d) ;})
        .on("mouseout", function(d) { d3.select(this).style("fill", function(d){return (d.depth==1 && d.value<0)?cost_color(true):color(!!d.children);}); tip.hide(d);})
-      .attr("height", function(d,i) { 
+      .attr("width", function(d,i) { 
         // return x(d.value)<0?-x(d.value):x(d.value);
         if(d.depth==1){ d.value<0||i==1?edge.push(edge[i]+d.value): edge.push(d.value); bars.push(d.value);} 
          //alert(d.value);
-        return Math.abs(y(d.value)-y(0));
+        return Math.abs(x(d.value)-x(0));
       })
-      .attr("width", barHeight)
-      .attr("y", function(d,i){ 
+      .attr("height", barHeight)
+      .attr("x", function(d,i){ 
         if(d.depth==1){
-        if(d.name.indexOf(":last")>0){ return d.value<0?(height-y(edge[i+1]-d.value)):height-y(0); }
-        return d.value<0?(height-y(edge[i+1])):height-y(0);
+        //return d.value<0?(x(edge[i+1])+margin.left+margin.top):0;}
+        if(d.name.indexOf(":last")>0){ return d.value<0?(x(edge[i+1]-d.value)):x(0); }
+        return d.value<0?(x(edge[i+1])):x(0);
         }
 
         else{
@@ -389,15 +388,15 @@ function bar(d) {
 function stack(d,i) {
   //var index=i<d.parent.children.length?i+1:d.parent.children-1;
   var x0;
-  if(d.name.indexOf(":last")>0 && d.value<0){ x0 =y(d.parent.children[i-1].value);}
+  if(d.name.indexOf(":last")>0 && d.value<0){ x0 =x(d.parent.children[i-1].value);}
   else{
-  x0 =y(d.parent&&d.value<0?d.parent.children[i+1].value:0);
+  x0 =x(d.parent&&d.value<0?d.parent.children[i+1].value:0);
   }
   var depth=1;
   return function(d) {
     //x0=(d.depth==depth?x0;0);
-    var tx = "translate(" +barHeight * i * 1.2 + "," + x0 + ")";
-    x0 += d.value<0?-y(d.value):y(d.value);
+    var tx = "translate(" +x0 + "," + barHeight * i * 1.2 + ")";
+    x0 += d.value<0?-x(d.value):x(d.value);
     // alert(x0);
     return tx;
   };
